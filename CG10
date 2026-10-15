@@ -1,0 +1,31 @@
+//Bezier Curve
+#include <graphics.h>
+#include <cmath>
+
+// Bezier Curve function
+void bezier(int x[], int y[]) {
+for (double t = 0; t <= 1; t += 0.001) {
+int xp = pow(1-t,3)*x[0] + 3*t*pow(1-t,2)*x[1] + 3*pow(t,2)*(1-t)*x[2] + pow(t,3)*x[3];
+int yp = pow(1-t,3)*y[0] + 3*t*pow(1-t,2)*y[1] + 3*pow(t,2)*(1-t)*y[2] + pow(t,3)*y[3];
+putpixel(xp, yp, YELLOW);
+}
+}
+int main() {
+int gd = DETECT, gm;
+initgraph(&gd, &gm, NULL);
+int x[] = {100, 200, 400, 500};
+int y[] = {300, 100, 100, 300};
+setcolor(WHITE);
+for (int i = 0; i < 4; i++) {
+circle(x[i], y[i], 3);
+}
+setcolor(YELLOW);
+bezier(x, y);
+char title[] = "Bezier Curve";
+outtextxy(250, 50, title);
+
+getch();
+closegraph();
+
+return 0;
+}
