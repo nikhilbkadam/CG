@@ -1,0 +1,127 @@
+// Practical 6 (theory version): Sutherland-Hodgman polygon clipping with
+// mouse + keyboard interface and window-to-viewport mapping.
+// 800x400 screen: left half = window area, right half = viewport.
+// Left click: add polygon vertex | Right click: close polygon (>=3 vertices)
+// c: clip | r: reset | Arrow keys: move window 10px (re-clips) | Esc: exit
+#include <graphics.h>
+#include <iostream>
+#include <vector>
+using namespace std;
+struct Pt { int x, y; };
+// clipping window inside the left half (moves with arrow keys)
+int WXL = 50, WYL = 50, WXR = 350, WYR = 350;
+// viewport inside the right half (fixed)
+const int VXL = 450, VYL = 50, VXR = 750, VYR = 350;
+vector<Pt> poly; // entered polygon
+vector<Pt> clipped; // clipped polygon
+bool closed = false;
+bool insidePt(Pt p, int edge) {
+switch (edge) {
+case 1: return p.x >= WXL;
+case 2: return p.x <= WXR;
+case 3: return p.y >= WYL;
+case 4: return p.y <= WYR;
+}
+return false;
+}
+Pt intersectPt(Pt p1, Pt p2, int edge) {
+Pt i;
+float m = (p2.y - p1.y) / (float)(p2.x - p1.x);
+switch (edge) {
+case 1: i.x = WXL; i.y = p1.y + m * (WXL - p1.x); break;
+case 2: i.x = WXR; i.y = p1.y + m * (WXR - p1.x); break;
+case 3: i.y = WYL; i.x = p1.x + (WYL - p1.y) / m; break;
+case 4: i.y = WYR; i.x = p1.x + (WYR - p1.y) / m; break;
+}
+return i;
+}
+vector<Pt> clipAgainst(vector<Pt> in, int edge) {
+vector<Pt> out;
+for (size_t i = 0; i < in.size(); i++) {
+Pt curr = in[i], prev = in[(i + in.size() - 1) % in.size()];
+bool ci = insidePt(curr, edge), pi = insidePt(prev, edge);
+if (pi && ci) out.push_back(curr);
+else if (pi && !ci) out.push_back(intersectPt(prev, curr, edge));
+else if (!pi && ci) {
+out.push_back(intersectPt(prev, curr, edge));
+out.push_back(curr);
+}
+}
+return out;
+}
+void doClip() {
+clipped = poly;
+for (int e = 1; e <= 4; e++) clipped = clipAgainst(clipped, e);
+}
+// window -> viewport transformation
+Pt w2v(Pt p) {
+Pt v;
+v.x = VXL + (p.x - WXL) * (VXR - VXL) / (WXR - WXL);
+v.y = VYL + (p.y - WYL) * (VYR - VYL) / (WYR - WYL);
+return v;
+}
+void drawPolyPts(const vector<Pt> &v, bool close, int color) {
+if (v.empty()) return;
+setcolor(color);
+for (size_t i = 0; i + 1 < v.size(); i++)
+line(v[i].x, v[i].y, v[i + 1].x, v[i + 1].y);
+if (close && v.size() > 1)
+
+Page 23
+line(v.back().x, v.back().y, v[0].x, v[0].y);
+for (auto &p : v) rectangle(p.x - 2, p.y - 2, p.x + 2, p.y + 2); // vertex markers
+}
+void redraw() {
+setbkcolor(WHITE);
+cleardevice();
+setcolor(BLUE);
+rectangle(WXL, WYL, WXR, WYR); // clipping window
+setcolor(DARKGRAY);
+rectangle(VXL, VYL, VXR, VYR); // viewport border
+setcolor(BLACK);
+outtextxy(10, 10, "L-click: vertex | R-click: close | c: clip | r: reset | Arrows: move | Esc: exit");
+outtextxy(450, 10, "Viewport");
+drawPolyPts(poly, closed, BLACK); // original polygon in black
+if (closed && !clipped.empty()) {
+drawPolyPts(clipped, true, RED); // clipped polygon in red (window)
+vector<Pt> vp;
+for (auto &p : clipped) vp.push_back(w2v(p));
+drawPolyPts(vp, true, RED); // mapped into viewport
+}
+}
+int main() {
+int gd = DETECT, gm;
+initgraph(&gd, &gm, NULL);
+initmouse();
+showmouseptr();
+cout << "Draw the polygon with the mouse in the graphics window.\n";
+redraw();
+while (true) {
+if (ismouseclick(WM_LBUTTONDOWN)) {
+int x, y;
+getmouseclick(WM_LBUTTONDOWN, x, y);
+if (!closed && x < 400) { poly.push_back({x, y}); redraw(); }
+}
+if (ismouseclick(WM_RBUTTONDOWN)) {
+int x, y;
+getmouseclick(WM_RBUTTONDOWN, x, y);
+if (!closed && poly.size() >= 3) { closed = true; redraw(); }
+}
+if (kbhit()) {
+int ch = getch();
+if (ch == 0) ch = getch(); // extended key (arrows)
+if (ch == 'c' || ch == 'C') { if (closed) { doClip(); redraw(); } }
+else if (ch == 'r' || ch == 'R') {
+poly.clear(); clipped.clear(); closed = false; redraw();
+}
+else if (ch == 75) { WXL -= 10; WXR -= 10; if (closed) doClip(); redraw(); }
+else if (ch == 77) { WXL += 10; WXR += 10; if (closed) doClip(); redraw(); }
+else if (ch == 72) { WYL -= 10; WYR -= 10; if (closed) doClip(); redraw(); }
+else if (ch == 80) { WYL += 10; WYR += 10; if (closed) doClip(); redraw(); }
+else if (ch == 27) break; // Esc
+}
+}
+closegraph();
+return 0;
+}
+Corrected Output
