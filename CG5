@@ -1,0 +1,28 @@
+// Practical 5.1 (theory version): Point clipping.
+// Clipping window in WORLD coordinates: (xmin,ymin)=(-100,-100), (xmax,ymax)=(100,100).
+// World -> screen: 2 pixels per unit, origin at screen centre (320,240).
+#include <graphics.h>
+#include <iostream>
+using namespace std;
+const int WXMIN = -100, WYMIN = -100, WXMAX = 100, WYMAX = 100;
+int mx(int x) { return 320 + 2 * x; }
+int my(int y) { return 240 - 2 * y; }
+int main() {
+int gd = DETECT, gm;
+initgraph(&gd, &gm, NULL);
+setcolor(WHITE);
+rectangle(mx(WXMIN), my(WYMAX), mx(WXMAX), my(WYMIN)); // clipping window
+outtextxy(10, 10, "Point clipping: window (-100,-100)-(100,100)");
+int x, y;
+cout << "Enter point (x y) in world coordinates: ";
+cin >> x >> y;
+if (x >= WXMIN && x <= WXMAX && y >= WYMIN && y <= WYMAX) {
+putpixel(mx(x), my(y), RED); // visible part in red
+cout << "Point (" << x << "," << y << ") is inside: drawn in red.\n";
+} else {
+cout << "Point (" << x << "," << y << ") rejected: outside window.\n";
+}
+getch();
+closegraph();
+return 0;
+}
