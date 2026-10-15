@@ -1,0 +1,88 @@
+// Fractal Tree:
+#include <graphics.h>
+#include <cmath>
+void drawTree(int x1, int y1, double angle, int depth, double length) {
+if (depth == 0) return;
+int x2 = x1 + (int)(length * cos(angle * M_PI / 180.0));
+int y2 = y1 - (int)(length * sin(angle * M_PI / 180.0));
+line(x1, y1, x2, y2);
+drawTree(x2, y2, angle - 20, depth - 1, length * 0.7);
+drawTree(x2, y2, angle + 20, depth - 1, length * 0.7);
+}
+int main() {
+int gd = DETECT, gm;
+initgraph(&gd, &gm, NULL);
+drawTree(getmaxx()/2, getmaxy()-50, -90, 10, 100);
+getch();
+closegraph();
+return 0;
+}
+
+
+
+//Koch Curve:
+#include <graphics.h>
+#include <cmath>
+
+void drawKoch(int x1, int y1, int x2, int y2, int depth) {
+if (depth == 0) {
+line(x1, y1, x2, y2);
+} else {
+int dx = x2 - x1;
+int dy = y2 - y1;
+int x3 = x1 + dx / 3, y3 = y1 + dy / 3;
+int x5 = x1 + 2 * dx / 3, y5 = y1 + 2 * dy / 3;
+int xm = (x1 + x2) / 2, ym = (y1 + y2) / 2;
+int x4 = (int)(xm + sqrt(3) * (y1 - y2) / 6.0);
+int y4 = (int)(ym + sqrt(3) * (x2 - x1) / 6.0);
+drawKoch(x1, y1, x3, y3, depth - 1);
+drawKoch(x3, y3, x4, y4, depth - 1);
+drawKoch(x4, y4, x5, y5, depth - 1);
+drawKoch(x5, y5, x2, y2, depth - 1);
+}
+}
+int main() {
+int gd = DETECT, gm;
+initgraph(&gd, &gm, NULL);
+
+drawKoch(50, 300, 450, 300, 4); // depth = 4
+
+getch();
+closegraph();
+return 0;
+}
+
+
+
+
+//Koch Curve:
+#include <graphics.h>
+#include <cmath>
+
+void drawKoch(int x1, int y1, int x2, int y2, int depth) {
+if (depth == 0) {
+line(x1, y1, x2, y2);
+} else {
+int dx = x2 - x1;
+int dy = y2 - y1;
+int x3 = x1 + dx / 3, y3 = y1 + dy / 3;
+int x5 = x1 + 2 * dx / 3, y5 = y1 + 2 * dy / 3;
+int xm = (x1 + x2) / 2, ym = (y1 + y2) / 2;
+int x4 = (int)(xm + sqrt(3) * (y1 - y2) / 6.0);
+int y4 = (int)(ym + sqrt(3) * (x2 - x1) / 6.0);
+drawKoch(x1, y1, x3, y3, depth - 1);
+drawKoch(x3, y3, x4, y4, depth - 1);
+drawKoch(x4, y4, x5, y5, depth - 1);
+drawKoch(x5, y5, x2, y2, depth - 1);
+}
+}
+int main() {
+int gd = DETECT, gm;
+initgraph(&gd, &gm, NULL);
+
+drawKoch(50, 300, 450, 300, 4); // depth = 4
+
+getch();
+closegraph();
+return 0;
+}
