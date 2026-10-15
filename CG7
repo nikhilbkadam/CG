@@ -1,0 +1,184 @@
+// Practical 7 (theory version): 2-D and 3-D transformations.
+// 2-D: translation, scaling, rotation of a triangle (sequential, as before).
+// 3-D: translation, scaling, rotation about X/Y/Z of a cube (side 100 at origin)
+// using 4x4 homogeneous matrices, drawn with oblique (cabinet) projection:
+// xp = x + 0.5*z*cos45, yp = y + 0.5*z*sin45. Original blue, transformed red.
+#include <graphics.h>
+#include <iostream>
+#include <conio.h>
+#include <math.h>
+using namespace std;
+// ============================ 2-D part ============================
+void drawTriangle(int x1, int y1, int x2, int y2, int x3, int y3, int color) {
+setcolor(color);
+line(x1, y1, x2, y2);
+line(x2, y2, x3, y3);
+line(x3, y3, x1, y1);
+}
+void transformations2D() {
+int gd = DETECT, gm;
+initgraph(&gd, &gm, "");
+int x1 = 100, y1 = 200, x2 = 200, y2 = 200, x3 = 150, y3 = 100;
+int tx, ty;
+float sx, sy, angle;
+cout << "Enter Translation factors (tx ty): ";
+cin >> tx >> ty;
+cout << "Enter Scaling factors (sx sy): ";
+cin >> sx >> sy;
+cout << "Enter Rotation angle (degrees): ";
+cin >> angle;
+setcolor(WHITE);
+outtextxy(10, 10, "WHITE = Original");
+drawTriangle(x1, y1, x2, y2, x3, y3, WHITE);
+outtextxy(x1 - 20, y1 + 20, "Original");
+cout << "Original: (" << x1 << "," << y1 << "), (" << x2 << "," << y2
+<< "), (" << x3 << "," << y3 << ")\n";
+delay(1500);
+int tx1 = x1 + tx, ty1 = y1 + ty;
+int tx2 = x2 + tx, ty2 = y2 + ty;
+int tx3 = x3 + tx, ty3 = y3 + ty;
+cout << "After Translation: (" << tx1 << "," << ty1 << "), (" << tx2 << "," << ty2
+<< "), (" << tx3 << "," << ty3 << ")\n";
+setcolor(GREEN);
+outtextxy(10, 30, "GREEN = After Translation");
+drawTriangle(tx1, ty1, tx2, ty2, tx3, ty3, GREEN);
+delay(1500);
+int centerX = (tx1 + tx2 + tx3) / 3, centerY = (ty1 + ty2 + ty3) / 3;
+int sx1 = centerX + (tx1 - centerX) * sx, sy1 = centerY + (ty1 - centerY) * sy;
+int sx2 = centerX + (tx2 - centerX) * sx, sy2 = centerY + (ty2 - centerY) * sy;
+int sx3 = centerX + (tx3 - centerX) * sx, sy3 = centerY + (ty3 - centerY) * sy;
+cout << "After Scaling: (" << sx1 << "," << sy1 << "), (" << sx2 << "," << sy2
+<< "), (" << sx3 << "," << sy3 << ")\n";
+setcolor(YELLOW);
+outtextxy(10, 50, "YELLOW = After Scaling");
+drawTriangle(sx1, sy1, sx2, sy2, sx3, sy3, YELLOW);
+delay(1500);
+float radian = angle * 3.14159 / 180.0;
+float c = cos(radian), s = sin(radian);
+int rx1 = centerX + (sx1 - centerX) * c - (sy1 - centerY) * s;
+int ry1 = centerY + (sx1 - centerX) * s + (sy1 - centerY) * c;
+int rx2 = centerX + (sx2 - centerX) * c - (sy2 - centerY) * s;
+int ry2 = centerY + (sx2 - centerX) * s + (sy2 - centerY) * c;
+int rx3 = centerX + (sx3 - centerX) * c - (sy3 - centerY) * s;
+int ry3 = centerY + (sx3 - centerX) * s + (sy3 - centerY) * c;
+cout << "After Rotation: (" << rx1 << "," << ry1 << "), (" << rx2 << "," << ry2
+<< "), (" << rx3 << "," << ry3 << ")\n";
+setcolor(CYAN);
+outtextxy(10, 70, "CYAN = After Rotation");
+drawTriangle(rx1, ry1, rx2, ry2, rx3, ry3, CYAN);
+setcolor(WHITE);
+
+
+
+rectangle(5, 5, 250, 90);
+getch();
+closegraph();
+}
+// ============================ 3-D part ============================
+struct Vec3 { float x, y, z; };
+float M4[4][4];
+void mIdentity() {
+for (int i = 0; i < 4; i++)
+for (int j = 0; j < 4; j++)
+M4[i][j] = (i == j) ? 1 : 0;
+}
+void mTranslate(float tx, float ty, float tz) {
+mIdentity(); M4[0][3] = tx; M4[1][3] = ty; M4[2][3] = tz;
+}
+void mScale(float sx, float sy, float sz) {
+mIdentity(); M4[0][0] = sx; M4[1][1] = sy; M4[2][2] = sz;
+}
+void mRotX(float deg) {
+float r = deg * 3.14159 / 180.0, c = cos(r), s = sin(r);
+mIdentity(); M4[1][1] = c; M4[1][2] = -s; M4[2][1] = s; M4[2][2] = c;
+}
+void mRotY(float deg) {
+float r = deg * 3.14159 / 180.0, c = cos(r), s = sin(r);
+mIdentity(); M4[0][0] = c; M4[0][2] = s; M4[2][0] = -s; M4[2][2] = c;
+}
+void mRotZ(float deg) {
+float r = deg * 3.14159 / 180.0, c = cos(r), s = sin(r);
+mIdentity(); M4[0][0] = c; M4[0][1] = -s; M4[1][0] = s; M4[1][1] = c;
+}
+Vec3 mApply(Vec3 v) {
+Vec3 r;
+r.x = M4[0][0]*v.x + M4[0][1]*v.y + M4[0][2]*v.z + M4[0][3];
+r.y = M4[1][0]*v.x + M4[1][1]*v.y + M4[1][2]*v.z + M4[1][3];
+r.z = M4[2][0]*v.x + M4[2][1]*v.y + M4[2][2]*v.z + M4[2][3];
+return r;
+}
+void printMat() {
+cout << "Transformation matrix:\n";
+for (int i = 0; i < 4; i++) {
+for (int j = 0; j < 4; j++) cout << M4[i][j] << "\t";
+cout << "\n";
+}
+}
+Vec3 cube[8] = {
+{0,0,0}, {100,0,0}, {100,100,0}, {0,100,0},
+{0,0,100}, {100,0,100}, {100,100,100}, {0,100,100}
+};
+int cubeEdges[12][2] = {
+{0,1},{1,2},{2,3},{3,0}, {4,5},{5,6},{6,7},{7,4}, {0,4},{1,5},{2,6},{3,7}
+};
+// oblique (cabinet) projection, drawn with screen offset (ox,oy)
+void drawCube(Vec3 v[8], int color, int ox, int oy) {
+setcolor(color);
+const float k = 0.5 * 0.70710678f; // 0.5 * cos45 = 0.5 * sin45
+for (int e = 0; e < 12; e++) {
+Vec3 a = v[cubeEdges[e][0]], b = v[cubeEdges[e][1]];
+int x1 = ox + (int)(a.x + k * a.z + 0.5f);
+int y1 = oy + (int)(a.y + k * a.z + 0.5f);
+int x2 = ox + (int)(b.x + k * b.z + 0.5f);
+int y2 = oy + (int)(b.y + k * b.z + 0.5f);
+line(x1, y1, x2, y2);
+}
+}
+void transformations3D() {
+cout << "\n3D Transformations on cube (side 100, corner at origin)\n";
+cout << "1. Translation 2. Scaling 3. Rotation about X\n";
+cout << "4. Rotation about Y 5. Rotation about Z\n";
+cout << "Enter choice: ";
+int ch; cin >> ch;
+if (ch == 1) {
+float tx, ty, tz;
+cout << "Enter tx ty tz: "; cin >> tx >> ty >> tz;
+mTranslate(tx, ty, tz);
+} else if (ch == 2) {
+float sx, sy, sz;
+cout << "Enter sx sy sz: "; cin >> sx >> sy >> sz;
+
+
+
+mScale(sx, sy, sz);
+} else {
+float ang;
+cout << "Enter angle (degrees): "; cin >> ang;
+if (ch == 3) mRotX(ang); else if (ch == 4) mRotY(ang); else mRotZ(ang);
+}
+printMat();
+Vec3 tv[8];
+cout << "\nOriginal -> Transformed vertices:\n";
+for (int i = 0; i < 8; i++) {
+tv[i] = mApply(cube[i]);
+cout << "(" << cube[i].x << "," << cube[i].y << "," << cube[i].z << ") -> ("
+<< tv[i].x << "," << tv[i].y << "," << tv[i].z << ")\n";
+}
+int gd = DETECT, gm;
+initgraph(&gd, &gm, NULL);
+setcolor(WHITE);
+outtextxy(10, 10, "BLUE = Original cube, RED = Transformed cube");
+drawCube(cube, BLUE, 120, 80);
+delay(1200);
+drawCube(tv, RED, 120, 80);
+getch();
+closegraph();
+}
+int main() {
+cout << "*** 2D and 3D TRANSFORMATIONS ***\n";
+cout << "1. 2D (triangle)\n2. 3D (cube)\nEnter choice: ";
+int mode; cin >> mode;
+if (mode == 1) transformations2D();
+else transformations3D();
+return 0;
+}
