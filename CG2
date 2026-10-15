@@ -1,0 +1,86 @@
+#include <graphics.h>
+#include <iostream>
+#include <cmath>
+using namespace std;
+void putStyledPixel(int x, int y, int style, int count) {
+if (style == 1) { // Simple
+putpixel(x, y, WHITE);
+}
+else if (style == 2) { // Dotted
+if (count % 2 == 0)
+putpixel(x, y, WHITE);
+}
+else if (style == 3) { // Dashed
+if ((count / 5) % 2 == 0) // draw 5 pixels, skip 5 pixels
+putpixel(x, y, WHITE);
+}
+else if (style == 4) { // Solid (same as simple)
+putpixel(x, y, WHITE);
+}
+}
+// ======================= DDA =======================
+void DDA(int x0, int y0, int x1, int y1, int style) {
+int dx = x1 - x0;
+int dy = y1 - y0;
+int steps = max(abs(dx), abs(dy));
+float Xinc = dx / (float)steps;
+float Yinc = dy / (float)steps;
+float x = x0;
+float y = y0;
+for (int i = 0; i <= steps; i++) {
+putStyledPixel(round(x), round(y), style, i);
+x += Xinc;
+y += Yinc;
+}
+}
+// =================== Bresenham =====================
+void Bresenham(int x0, int y0, int x1, int y1, int style) {
+int dx = abs(x1 - x0);
+int dy = abs(y1 - y0);
+int sx = (x0 < x1) ? 1 : -1;
+int sy = (y0 < y1) ? 1 : -1;
+int err = dx - dy;
+int count = 0;
+while (true) {
+putStyledPixel(x0, y0, style, count);
+if (x0 == x1 && y0 == y1) break;
+int e2 = 2 * err;
+if (e2 > -dy) {
+err -= dy;
+x0 += sx;
+}
+if (e2 < dx) {
+err += dx;
+y0 += sy;
+}
+count++;
+}
+}
+// ==================== Main =======================
+int main() {
+int gd = DETECT, gm;
+initgraph(&gd, &gm, "");
+cout << "======== Line Drawing Algorithms ========\n";
+cout << "1. DDA Algorithm\n2. Bresenham Algorithm\n";
+cout << "Enter your choice (1 or 2): ";
+int algo; cin >> algo;
+cout << "======== Line Styles ========\n";
+cout << "1. Simple Line\n2. Dotted Line\n3. Dashed Line\n4. Solid Line\n";
+cout << "Enter your choice (1-4): ";
+int style; cin >> style;
+
+Page 3
+
+int x0, y0, x1, y1;
+cout << "Enter starting point (x0, y0): ";
+cin >> x0 >> y0;
+cout << "Enter ending point (x1, y1): ";
+cin >> x1 >> y1;
+if (algo == 1)
+DDA(x0, y0, x1, y1, style);
+else
+Bresenham(x0, y0, x1, y1, style);
+getch();
+closegraph();
+return 0;
+}
