@@ -69,8 +69,6 @@ cout << "1. Simple Line\n2. Dotted Line\n3. Dashed Line\n4. Solid Line\n";
 cout << "Enter your choice (1-4): ";
 int style; cin >> style;
 
-Page 3
-
 int x0, y0, x1, y1;
 cout << "Enter starting point (x0, y0): ";
 cin >> x0 >> y0;
