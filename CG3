@@ -1,0 +1,45 @@
+
+#include <graphics.h>
+#include <iostream>
+using namespace std;
+void screenToQuadrant(int sx, int sy, int &qx, int &qy, int xc, int yc) {
+qx = sx - xc;
+qy = yc - sy;
+}
+int main() {
+// Initialize graphics window
+int gd = DETECT, gm;
+initgraph(&gd, &gm, NULL);
+// Set background to black
+setbkcolor(BLACK);
+cleardevice();
+// Calculate center
+int screen_width = getmaxx();
+int screen_height = getmaxy();
+int xc = screen_width / 2;
+int yc = screen_height / 2;
+// Draw axes (in white)
+setcolor(WHITE);
+line(xc, 0, xc, screen_height);
+line(0, yc, screen_width, yc);
+// Input points in quadrant coordinates
+int qx1, qy1, qx2, qy2;
+cout << "Enter first point (x y) in quadrant coordinates: ";
+cin >> qx1 >> qy1;
+cout << "Enter second point (x y) in quadrant coordinates: ";
+cin >> qx2 >> qy2;
+// Convert to screen coordinates
+int sx1 = qx1 + xc;
+int sy1 = yc - qy1;
+int sx2 = qx2 + xc;
+int sy2 = yc - qy2;
+// Draw points and line (in red)
+setcolor(RED);
+putpixel(sx1, sy1, RED);
+putpixel(sx2, sy2, RED);
+line(sx1, sy1, sx2, sy2);
+cout << "Line drawn between (" << qx1 << "," << qy1 << ") and (" << qx2 << "," << qy2 << ")." << endl;
+getch();
+closegraph();
+return 0;
+}
