@@ -1,0 +1,64 @@
+#include <graphics.h>
+#include <iostream>
+using namespace std;
+void plotCirclePoints(int xc, int yc, int x, int y, int color) {
+putpixel(xc + x, yc + y, color);
+putpixel(xc - x, yc + y, color);
+putpixel(xc + x, yc - y, color);
+putpixel(xc - x, yc - y, color);
+putpixel(xc + y, yc + x, color);
+putpixel(xc - y, yc + x, color);
+putpixel(xc + y, yc - x, color);
+putpixel(xc - y, yc - x, color);
+}
+// Bresenham Circle Drawing
+void drawBresenhamCircle(int xc, int yc, int r, int color) {
+int x = 0, y = r;
+int d = 3 - 2 * r;
+while (x <= y) {
+plotCirclePoints(xc, yc, x, y, color);
+if (d < 0) {
+d = d + 4 * x + 6;
+} else {
+d = d + 4 * (x - y) + 10;
+y--;
+}
+x++;
+}
+}
+void drawAxis(int xc, int yc, int xmax, int ymax) {
+setcolor(RED);
+line(0, yc, xmax, yc); // X-axis
+line(xc, 0, xc, ymax); // Y-axis
+}
+int main() {
+int gd = DETECT, gm;
+initgraph(&gd, &gm, NULL);
+// Set black background
+setbkcolor(BLACK);
+cleardevice();
+int xmax = getmaxx();
+int ymax = getmaxy();
+int midx = xmax / 2;
+int midy = ymax / 2;
+// Draw axes
+drawAxis(midx, midy, xmax, ymax);
+// User input
+int r;
+cout << "Enter radius of object (circle): ";
+cin >> r;
+// Display path name
+setcolor(WHITE);
+outtextxy(10, 10, "Path: omd44");
+outtextxy(10, 30, "Displaying circles using Bresenham's Algorithm");
+int offset = 100;
+setcolor(WHITE);
+drawBresenhamCircle(midx, midy, r, WHITE); // Center
+drawBresenhamCircle(midx + offset, midy + offset, r, WHITE); // Q1
+drawBresenhamCircle(midx - offset, midy + offset, r, WHITE); // Q2
+drawBresenhamCircle(midx - offset, midy - offset, r, WHITE); // Q3
+drawBresenhamCircle(midx + offset, midy - offset, r, WHITE); // Q4
+getch();
+closegraph();
+return 0;
+}
