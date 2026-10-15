@@ -26,3 +26,247 @@ getch();
 closegraph();
 return 0;
 }
+
+
+
+
+
+// Practical 5.2 (theory version): Cohen-Sutherland line clipping.
+// Clipping window in WORLD coordinates: (-100,-100)-(100,100).
+// Original line in grey, clipped (visible) part in red.
+#include <graphics.h>
+#include <iostream>
+using namespace std;
+const int INSIDE = 0; // 0000
+const int LEFT = 1; // 0001
+const int RIGHT = 2; // 0010
+const int BOTTOM = 4; // 0100
+const int TOP = 8; // 1000
+const int WXMIN = -100, WYMIN = -100, WXMAX = 100, WYMAX = 100;
+int mx(int x) { return 320 + 2 * x; }
+int my(int y) { return 240 - 2 * y; }
+int computeCode(int x, int y) {
+int code = INSIDE;
+if (x < WXMIN) code |= LEFT;
+else if (x > WXMAX) code |= RIGHT;
+if (y < WYMIN) code |= BOTTOM;
+else if (y > WYMAX) code |= TOP;
+return code;
+}
+// Clips in world coordinates; draws window (white) + visible part (red).
+void cohenSutherlandClip(int x1, int y1, int x2, int y2) {
+int code1 = computeCode(x1, y1);
+int code2 = computeCode(x2, y2);
+bool accept = false;
+while (true) {
+if ((code1 | code2) == 0) { accept = true; break; } // trivial accept
+else if (code1 & code2) break; // trivial reject
+else {
+int codeOut = code1 ? code1 : code2;
+int x, y;
+if (codeOut & TOP) {
+x = x1 + (x2 - x1) * (WYMAX - y1) / (y2 - y1); y = WYMAX;
+} else if (codeOut & BOTTOM) {
+x = x1 + (x2 - x1) * (WYMIN - y1) / (y2 - y1); y = WYMIN;
+} else if (codeOut & RIGHT) {
+y = y1 + (y2 - y1) * (WXMAX - x1) / (x2 - x1); x = WXMAX;
+} else {
+y = y1 + (y2 - y1) * (WXMIN - x1) / (x2 - x1); x = WXMIN;
+}
+if (codeOut == code1) { x1 = x; y1 = y; code1 = computeCode(x1, y1); }
+else { x2 = x; y2 = y; code2 = computeCode(x2, y2); }
+}
+}
+setcolor(WHITE);
+rectangle(mx(WXMIN), my(WYMAX), mx(WXMAX), my(WYMIN));
+if (accept) {
+cout << "Clipped line: (" << x1 << "," << y1 << ")-(" << x2 << "," << y2 << ")\n";
+setcolor(RED);
+line(mx(x1), my(y1), mx(x2), my(y2));
+} else {
+cout << "Line rejected: completely outside window.\n";
+}
+}
+int main() {
+int gd = DETECT, gm;
+initgraph(&gd, &gm, NULL);
+int x1, y1, x2, y2;
+cout << "Enter line endpoints in world coordinates (x1 y1 x2 y2): ";
+cin >> x1 >> y1 >> x2 >> y2;
+setcolor(LIGHTGRAY);
+line(mx(x1), my(y1), mx(x2), my(y2)); // original in grey
+outtextxy(10, 10, "Cohen-Sutherland: grey=original, red=clipped");
+delay(1000);
+cleardevice();
+cohenSutherlandClip(x1, y1, x2, y2);
+getch();
+closegraph();
+return 0;
+
+
+}
+
+
+
+
+
+
+
+
+
+
+
+// Practical 5.3 (theory version): Liang-Barsky line clipping.
+// Clipping window in WORLD coordinates: (-100,-100)-(100,100).
+// Original line in grey, clipped (visible) part in red.
+#include <graphics.h>
+#include <iostream>
+using namespace std;
+const int WXMIN = -100, WYMIN = -100, WXMAX = 100, WYMAX = 100;
+int mx(int x) { return 320 + 2 * x; }
+int my(int y) { return 240 - 2 * y; }
+bool clipTest(float p, float q, float &u1, float &u2) {
+if (p == 0 && q < 0) return false; // parallel and outside
+float r = q / p;
+if (p < 0) {
+if (r > u2) return false;
+else if (r > u1) u1 = r;
+} else if (p > 0) {
+if (r < u1) return false;
+else if (r < u2) u2 = r;
+}
+return true;
+}
+void liangBarskyClip(int x1, int y1, int x2, int y2) {
+float dx = x2 - x1, dy = y2 - y1;
+float u1 = 0.0, u2 = 1.0;
+setcolor(WHITE);
+rectangle(mx(WXMIN), my(WYMAX), mx(WXMAX), my(WYMIN));
+if (clipTest(-dx, x1 - WXMIN, u1, u2) &&
+clipTest(dx, WXMAX - x1, u1, u2) &&
+clipTest(-dy, y1 - WYMIN, u1, u2) &&
+clipTest(dy, WYMAX - y1, u1, u2)) {
+int nx1 = x1 + u1 * dx, ny1 = y1 + u1 * dy;
+int nx2 = x1 + u2 * dx, ny2 = y1 + u2 * dy;
+cout << "Clipped line: (" << nx1 << "," << ny1 << ")-(" << nx2 << "," << ny2 << ")\n";
+setcolor(RED);
+line(mx(nx1), my(ny1), mx(nx2), my(ny2));
+} else {
+cout << "Line rejected: completely outside window.\n";
+}
+}
+int main() {
+int gd = DETECT, gm;
+initgraph(&gd, &gm, NULL);
+int x1, y1, x2, y2;
+cout << "Enter line endpoints in world coordinates (x1 y1 x2 y2): ";
+cin >> x1 >> y1 >> x2 >> y2;
+setcolor(LIGHTGRAY);
+line(mx(x1), my(y1), mx(x2), my(y2)); // original in grey
+outtextxy(10, 10, "Liang-Barsky: grey=original, red=clipped");
+delay(1000);
+cleardevice();
+liangBarskyClip(x1, y1, x2, y2);
+getch();
+closegraph();
+return 0;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+// Practical 5.4 (theory version): Sutherland-Hodgman polygon clipping.
+// Clipping window in WORLD coordinates: (-100,-100)-(100,100).
+// Original polygon in grey, clipped (visible) part in red.
+#include <graphics.h>
+#include <iostream>
+#include <vector>
+using namespace std;
+const int WXMIN = -100, WYMIN = -100, WXMAX = 100, WYMAX = 100;
+int mx(int x) { return 320 + 2 * x; }
+int my(int y) { return 240 - 2 * y; }
+struct Point { int x, y; };
+// edge: 1=left 2=right 3=bottom 4=top
+Point intersectPt(Point p1, Point p2, int edge) {
+Point i;
+float m = (p2.y - p1.y) / (float)(p2.x - p1.x);
+switch (edge) {
+case 1: i.x = WXMIN; i.y = p1.y + m * (WXMIN - p1.x); break;
+case 2: i.x = WXMAX; i.y = p1.y + m * (WXMAX - p1.x); break;
+case 3: i.y = WYMIN; i.x = p1.x + (WYMIN - p1.y) / m; break;
+case 4: i.y = WYMAX; i.x = p1.x + (WYMAX - p1.y) / m; break;
+}
+return i;
+}
+bool insidePt(Point p, int edge) {
+switch (edge) {
+case 1: return p.x >= WXMIN;
+case 2: return p.x <= WXMAX;
+case 3: return p.y >= WYMIN;
+case 4: return p.y <= WYMAX;
+}
+return false;
+}
+vector<Point> clipPolygon(vector<Point> poly, int edge) {
+vector<Point> out;
+for (size_t i = 0; i < poly.size(); i++) {
+Point curr = poly[i];
+Point prev = poly[(i + poly.size() - 1) % poly.size()];
+bool currIn = insidePt(curr, edge), prevIn = insidePt(prev, edge);
+if (prevIn && currIn) out.push_back(curr);
+else if (prevIn && !currIn) out.push_back(intersectPt(prev, curr, edge));
+else if (!prevIn && currIn) {
+out.push_back(intersectPt(prev, curr, edge));
+out.push_back(curr);
+}
+}
+return out;
+}
+void drawPolyWorld(const vector<Point> &poly, int color) {
+setcolor(color);
+for (size_t i = 0; i < poly.size(); i++)
+line(mx(poly[i].x), my(poly[i].y),
+mx(poly[(i + 1) % poly.size()].x), my(poly[(i + 1) % poly.size()].y));
+}
+int main() {
+int gd = DETECT, gm;
+initgraph(&gd, &gm, NULL);
+int n;
+cout << "Enter number of polygon vertices: ";
+cin >> n;
+vector<Point> poly(n);
+cout << "Enter vertices in world coordinates (x y):\n";
+for (int i = 0; i < n; i++) cin >> poly[i].x >> poly[i].y;
+drawPolyWorld(poly, LIGHTGRAY); // original in grey
+outtextxy(10, 10, "Sutherland-Hodgman: grey=original, red=clipped");
+delay(1500);
+cleardevice();
+setcolor(WHITE);
+rectangle(mx(WXMIN), my(WYMAX), mx(WXMAX), my(WYMIN));
+for (int edge = 1; edge <= 4; edge++) poly = clipPolygon(poly, edge);
+
+
+
+cout << "Clipped polygon has " << poly.size() << " vertices:\n";
+for (auto &p : poly) cout << "(" << p.x << "," << p.y << ") ";
+cout << "\n";
+drawPolyWorld(poly, RED); // visible part in red
+getch();
+closegraph();
+return 0;
+}
