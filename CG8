@@ -1,0 +1,119 @@
+// Practical 8 (theory version): 2-D transformations with 3x3 homogeneous
+// matrices, exactly as per theory:
+// Scaling about fixed point (xf,yf): M = T(xf,yf) * S(sx,sy) * T(-xf,-yf)
+// Rotation about pivot (px,py): M = T(px,py) * R(theta) * T(-px,-py)
+// Reflections: X-axis, Y-axis, origin, line y=x, line y=-x
+// The composite matrix and new coordinates are printed. X/Y axes are drawn
+// with the origin at the screen centre; original object blue, transformed red.
+#include <graphics.h>
+#include <iostream>
+#include <vector>
+#include <cmath>
+using namespace std;
+struct Mat { float m[3][3]; };
+Mat matMul(const Mat &A, const Mat &B) {
+Mat C;
+for (int i = 0; i < 3; i++)
+for (int j = 0; j < 3; j++) {
+C.m[i][j] = 0;
+for (int k = 0; k < 3; k++) C.m[i][j] += A.m[i][k] * B.m[k][j];
+}
+return C;
+}
+Mat matTranslate(float tx, float ty) {
+Mat T = {{{1,0,tx},{0,1,ty},{0,0,1}}};
+return T;
+}
+Mat matScale(float sx, float sy) {
+Mat S = {{{sx,0,0},{0,sy,0},{0,0,1}}};
+return S;
+}
+Mat matRotate(float deg) {
+float r = deg * 3.14159 / 180.0, c = cos(r), s = sin(r);
+Mat R = {{{c,-s,0},{s,c,0},{0,0,1}}};
+return R;
+}
+Mat matReflectX() { Mat M = {{{1,0,0},{0,-1,0},{0,0,1}}}; return M; }
+Mat matReflectY() { Mat M = {{{-1,0,0},{0,1,0},{0,0,1}}}; return M; }
+Mat matReflectOrig() { Mat M = {{{-1,0,0},{0,-1,0},{0,0,1}}}; return M; }
+Mat matReflectYX() { Mat M = {{{0,1,0},{1,0,0},{0,0,1}}}; return M; } // y = x
+Mat matReflectYnegX(){ Mat M = {{{0,-1,0},{-1,0,0},{0,0,1}}}; return M; } // y = -x
+struct Pt { int x, y; };
+Pt applyMat(const Mat &M, Pt p) {
+Pt q;
+q.x = (int)round(M.m[0][0]*p.x + M.m[0][1]*p.y + M.m[0][2]);
+q.y = (int)round(M.m[1][0]*p.x + M.m[1][1]*p.y + M.m[1][2]);
+return q;
+}
+void printMat(const Mat &M) {
+cout << "Composite matrix:\n";
+for (int i = 0; i < 3; i++) {
+for (int j = 0; j < 3; j++) cout << M.m[i][j] << "\t";
+cout << "\n";
+}
+}
+// math coords -> screen coords (origin at centre)
+int sx_(int x) { return 320 + x; }
+int sy_(int y) { return 240 - y; }
+void drawPoly(const vector<Pt> &poly, int color) {
+setcolor(color);
+for (size_t i = 0; i < poly.size(); i++)
+line(sx_(poly[i].x), sy_(poly[i].y),
+sx_(poly[(i+1)%poly.size()].x), sy_(poly[(i+1)%poly.size()].y));
+}
+int main() {
+int n;
+cout << "Enter number of polygon vertices: ";
+cin >> n;
+vector<Pt> poly(n);
+cout << "Enter vertices in math coordinates (x y), origin at centre:\n";
+for (int i = 0; i < n; i++) cin >> poly[i].x >> poly[i].y;
+
+
+
+cout << "\nChoose Transformation:\n1. Scaling about fixed point\n"
+<< "2. Rotation about arbitrary point\n3. Reflection\n";
+int choice; cin >> choice;
+Mat M;
+if (choice == 1) {
+float sxx, syy; int xf, yf;
+cout << "Enter sx sy and fixed point xf yf: ";
+cin >> sxx >> syy >> xf >> yf;
+M = matMul(matTranslate(xf, yf),
+matMul(matScale(sxx, syy), matTranslate(-xf, -yf)));
+} else if (choice == 2) {
+float ang; int px, py;
+cout << "Enter angle (degrees) and pivot px py: ";
+cin >> ang >> px >> py;
+M = matMul(matTranslate(px, py),
+matMul(matRotate(ang), matTranslate(-px, -py)));
+} else {
+cout << "1. X-axis 2. Y-axis 3. Origin 4. line y=x 5. line y=-x\n";
+int r; cin >> r;
+if (r == 1) M = matReflectX();
+else if (r == 2) M = matReflectY();
+else if (r == 3) M = matReflectOrig();
+else if (r == 4) M = matReflectYX();
+else M = matReflectYnegX();
+}
+printMat(M);
+vector<Pt> tp;
+cout << "Transformed vertices:\n";
+for (auto &p : poly) {
+Pt q = applyMat(M, p);
+tp.push_back(q);
+cout << "(" << p.x << "," << p.y << ") -> (" << q.x << "," << q.y << ")\n";
+}
+int gd = DETECT, gm;
+initgraph(&gd, &gm, NULL);
+setcolor(WHITE);
+line(0, 240, 639, 240); // X-axis
+line(320, 0, 320, 479); // Y-axis
+outtextxy(10, 10, "BLUE = Original, RED = Transformed (origin at centre)");
+drawPoly(poly, BLUE);
+delay(1000);
+drawPoly(tp, RED);
+getch();
+closegraph();
+return 0;
+}
